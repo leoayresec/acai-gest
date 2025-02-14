@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateEmpresaDto } from './dto/criar-empresa-dto';
 import { EmailService } from '../config/email/email.service';
