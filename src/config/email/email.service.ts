@@ -10,7 +10,7 @@ export class EmailService {
 
     await this.mailerService.sendMail({
       to,
-      subject: 'Confirmação de Cadastro - Acai Guest',
+      subject: 'Confirmação de Cadastro - Açai Gest',
       template: './confirmation', // Nome do template de e-mail
       context: {
         confirmationUrl,
