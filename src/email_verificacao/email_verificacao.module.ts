@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EmailVerificacaoService } from './email_verificacao.service';
 import { EmailModule } from '../config/email/email.module';
-import { PrismaModule } from '../prisma.module'; // ✅ Importa o PrismaModule corretamente
+import { PrismaModule } from '../../prisma/prisma.module'; // ✅ Importa o PrismaModule corretamente
 
 @Module({
   imports: [EmailModule, PrismaModule], // ✅ Agora usamos Prisma
