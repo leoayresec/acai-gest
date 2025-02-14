@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tab_empresas {
+  id_empresa       String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  razao_social     String         @db.VarChar(255) // 
+  email            String         @unique @db.VarChar(255)
+  num_telefone     String         @db.VarChar(20)
+  cpf_cnpj         String         @unique @db.VarChar(20)
+  endereco         String         @db.VarChar(255)
+  numero           String         @db.VarChar(10)
+  cep              String         @db.VarChar(10)
+  senha            String
+  ativo            Boolean?       @default(false)
+  data_criacao     DateTime?      @default(now()) @db.Timestamptz(6)
+  data_atualizacao DateTime?      @default(now()) @db.Timestamptz(6)
+  tab_usuarios     tab_usuarios[]
+}
+
+model tab_permissoes {
+  id_permissao            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome                    String                    @unique @db.VarChar(255)
+  tab_permissoes_usuarios tab_permissoes_usuarios[]
+}
+
+model tab_permissoes_usuarios {
+  usuario_id     String         @db.Uuid
+  permissao_id   String         @db.Uuid
+  tab_permissoes tab_permissoes @relation(fields: [permissao_id], references: [id_permissao], onDelete: Cascade, onUpdate: NoAction)
+  tab_usuarios   tab_usuarios   @relation(fields: [usuario_id], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([usuario_id, permissao_id])
+}
+
+model tab_tokens_verificacao {
+  id_token     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuario_id   String       @unique @db.Uuid
+  token        String       @unique @db.VarChar(255)
+  expira_em    DateTime     @db.Timestamptz(6)
+  tab_usuarios tab_usuarios @relation(fields: [usuario_id], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tab_usuarios {
+  id_usuario              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresa_id              String                    @db.Uuid
+  nome                    String                    @db.VarChar(255) //
+  email                   String                    @unique @db.VarChar(255)
+  num_telefone            String?                   @db.VarChar(20)
+  senha                   String
+  ativo                   Boolean?                  @default(true)
+  data_criacao            DateTime?                 @default(now()) @db.Timestamptz(6)
+  data_atualizacao        DateTime?                 @default(now()) @db.Timestamptz(6)
+  tab_permissoes_usuarios tab_permissoes_usuarios[]
+  tab_tokens_verificacao  tab_tokens_verificacao?
+  tab_empresas            tab_empresas              @relation(fields: [empresa_id], references: [id_empresa], onDelete: Cascade, onUpdate: NoAction)
+}

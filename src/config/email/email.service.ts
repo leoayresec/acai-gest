@@ -14,6 +14,7 @@ export class EmailService {
       template: './confirmation', // Nome do template de e-mail
       context: {
         confirmationUrl,
+        link:confirmationUrl
       },
     });
   }

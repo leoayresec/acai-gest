@@ -1,18 +1,16 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmpresaService } from './empresa.service';
 import { EmpresaController } from './empresa.controller';
-import { Empresa } from './entities/empresa.entity';
-import { EmailConfirmacaoModule } from '../email_confirmacao/email_confirmacao.module';
+import { EmailVerificacaoModule } from '../email_verificacao/email_verificacao.module';
 import { EmailModule } from '../config/email/email.module';
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Empresa]),
-    EmailConfirmacaoModule,
+    EmailVerificacaoModule,
     EmailModule,
   ],
   controllers: [EmpresaController],
-  providers: [EmpresaService],
+  providers: [EmpresaService, PrismaService],
 })
 export class EmpresaModule {}

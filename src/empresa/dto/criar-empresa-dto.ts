@@ -1,13 +1,13 @@
-import { IsString, IsEmail, IsNotEmpty, Length, Matches, IsBoolean } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, Length, Matches, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateEmpresaDto {
-  @IsNotEmpty({ message: 'O nome da empresa é obrigatório.' })
+  @IsNotEmpty({ message: 'A Razão Social da empresa é obrigatória.' })
   @IsString()
-  nome: string;
+  razao_social: string;
 
   @IsNotEmpty({ message: 'O telefone é obrigatório.' })
   @IsString()
-  telefone: string;
+  num_telefone: string; // ✅ Corrigido para `num_telefone`, que é o nome correto no banco
 
   @IsNotEmpty({ message: 'O e-mail é obrigatório.' })
   @IsEmail({}, { message: 'O e-mail informado não é válido.' })
@@ -27,14 +27,15 @@ export class CreateEmpresaDto {
   @IsString()
   endereco: string;
 
-  @IsNotEmpty({ message: 'O número é obrigatório.' })
+  @IsNotEmpty({ message: 'O número do endereço é obrigatório.' })
   @IsString()
-  numero: string;
+  numero: string; // ✅ Corrigido para `numero`, que é o nome correto no banco
 
   @IsNotEmpty({ message: 'A senha é obrigatória.' })
   @IsString()
   senha: string;
   
+  @IsOptional() // ✅ Campo opcional, pois no banco já tem um valor padrão `false`
   @IsBoolean()
-  ativo: boolean;
+  ativo?: boolean;
 }

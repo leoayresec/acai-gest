@@ -1,74 +1,132 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
-import { Empresa } from './entities/empresa.entity';
 import { CreateEmpresaDto } from './dto/criar-empresa-dto';
 import { EmailService } from '../config/email/email.service';
-import { EmailConfirmacaoService } from '../email_confirmacao/email_confirmacao.service';
+import { EmailVerificacaoService } from '../email_verificacao/email_verificacao.service';
 
 @Injectable()
 export class EmpresaService {
   constructor(
-    @InjectRepository(Empresa)
-    private readonly empresaRepository: Repository<Empresa>,
-    private readonly emailService: EmailService, // ✅ Serviço de envio de e-mails
-    private readonly emailConfirmacaoService: EmailConfirmacaoService, // ✅ Serviço de tokens
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+    private readonly emailVerificacaoService: EmailVerificacaoService,
   ) {}
 
-  private async verificarEmailExistente(email: string): Promise<void> {
-    const emailExistente = await this.empresaRepository.findOne({ where: { email } });
+  // ✅ Verifica se o e-mail já existe
+  private async verificarEmailExistente(email: string): Promise<boolean> {
+    const empresa = await this.prisma.tab_empresas.findUnique({ where: { email } });
+    return empresa !== null;
+  }
 
-    if (emailExistente) {
+  // ✅ Criptografa a senha antes de salvar
+  private async criptografarSenha(senha: string): Promise<string> {
+    return bcrypt.hash(senha, 10);
+  }
+
+  // ✅ Criar empresa e enviar e-mail de ativação
+  async create(dto: CreateEmpresaDto) {
+    if (await this.verificarEmailExistente(dto.email)) {
       throw new BadRequestException('O email informado já está em uso.');
     }
+  
+    const senhaCriptografada = await this.criptografarSenha(dto.senha);
+  
+    try {
+      // ✅ Criamos a empresa primeiro
+      const empresa = await this.prisma.tab_empresas.create({
+        data: {
+          razao_social: dto.razao_social,
+          email: dto.email,
+          num_telefone: dto.num_telefone,
+          cpf_cnpj: dto.cpf_cnpj,
+          endereco: dto.endereco,
+          numero: dto.numero,
+          cep: dto.cep,
+          senha: senhaCriptografada,
+          ativo: false,
+        },
+      });
+  
+      // ✅ Agora criamos o usuário, garantindo que `empresa.id_empresa` está disponível
+      const usuario = await this.prisma.tab_usuarios.create({
+        data: {
+          nome: 'Administrador',
+          email: dto.email,
+          num_telefone: dto.num_telefone,
+          senha: senhaCriptografada,
+          ativo: true,
+          empresa_id: empresa.id_empresa, // ✅ Agora podemos usar `empresa.id_empresa`
+        },
+      });
+  
+      // ✅ Criar token de verificação e enviar e-mail
+      const token = await this.emailVerificacaoService.gerarToken(usuario.id_usuario);
+      await this.emailService.sendConfirmationEmail(dto.email, token);
+  
+      return { message: 'Empresa criada! Um e-mail de ativação foi enviado.' };
+    } catch (error) {
+      console.error('Erro ao criar empresa:', error); // ✅ Exibe detalhes no log
+      throw new BadRequestException(error.message || 'Erro ao criar empresa. Verifique os dados e tente novamente.');
+    }
+    
   }
 
-  private async criptografarSenha(senha: string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    return bcrypt.hash(senha, salt);
-  }
-
-  async create(createEmpresaDto: CreateEmpresaDto) {
-    await this.verificarEmailExistente(createEmpresaDto.email);
-    createEmpresaDto.senha = await this.criptografarSenha(createEmpresaDto.senha);
-
-    const empresa = this.empresaRepository.create(createEmpresaDto);
-    empresa.ativo = false;
-
-    await this.empresaRepository.save(empresa);
-
-    // ✅ Gerar token na tabela `tab_email_confirmacao`
-    const token = await this.emailConfirmacaoService.gerarToken(empresa);
-
-    // ✅ Enviar e-mail de ativação
-    await this.emailService.sendConfirmationEmail(createEmpresaDto.email, token);
-
-    return { message: 'Empresa criada! Um e-mail de ativação foi enviado.' };
-  }
-
+  // ✅ Confirma a conta ativando a empresa
   async confirmarConta(token: string) {
-    const empresa = await this.emailConfirmacaoService.validarToken(token);
-
-    if (!empresa) {
+    const usuario = await this.emailVerificacaoService.validarToken(token);
+  
+    if (!usuario) {
       throw new BadRequestException('Token inválido ou expirado.');
     }
-
-    empresa.ativo = true;
-    await this.empresaRepository.save(empresa);
-
-    // ✅ Remover o token da tabela após ativação
-    await this.emailConfirmacaoService.removerToken(token);
-
-    return { message: 'Empresa ativada com sucesso!' };
-  }
-
-  async buscarPorEmail(email: string): Promise<Empresa | null> {
-    return this.empresaRepository.findOne({ where: { email } });
+  
+    // ✅ Transação Prisma - Apenas chamadas do Prisma são incluídas
+    await this.prisma.$transaction([
+      this.prisma.tab_empresas.update({
+        where: { id_empresa: usuario.empresa_id },
+        data: { ativo: true },
+      }),
+      this.prisma.tab_usuarios.update({
+        where: { id_usuario: usuario.id_usuario },
+        data: { ativo: true },
+      }),
+    ]);
+  
+    // ✅ Agora, chamamos `removerToken` separadamente
+    await this.emailVerificacaoService.removerToken(token);
+  
+    return { message: 'Conta ativada com sucesso!' };
   }
   
-  async enviarEmailAtivacao(email: string, token: string) {
-    await this.emailService.sendConfirmationEmail(email, token);
+
+  // ✅ Buscar empresa pelo e-mail
+  async buscarPorEmail(email: string) {
+    return this.prisma.tab_empresas.findUnique({ where: { email } });
   }
-    
+
+  // ✅ Buscar todas as empresas cadastradas
+  async findAll() {
+    return this.prisma.tab_empresas.findMany();
+  }
+
+  // ✅ Buscar empresa pelo ID
+  async findOne(id_empresa: string) {
+    return this.prisma.tab_empresas.findUnique({ where: { id_empresa } });
+  }
+
+  // ✅ Atualizar informações da empresa
+  async update(id_empresa: string, data: Partial<CreateEmpresaDto>) {
+    return this.prisma.tab_empresas.update({
+      where: { id_empresa },
+      data,
+    });
+  }
+
+  // ✅ Remover empresa e usuários relacionados
+  async remove(id_empresa: string) {
+    return this.prisma.$transaction([
+      this.prisma.tab_usuarios.deleteMany({ where: { empresa_id: id_empresa } }),
+      this.prisma.tab_empresas.delete({ where: { id_empresa } }),
+    ]);
+  }
 }
