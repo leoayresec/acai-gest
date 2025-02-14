@@ -12,7 +12,7 @@ export const emailConfig: MailerOptions = {
     },
   },
   defaults: {
-    from: '"Suporte Acai Guest" <no-reply@acai-guest.com>',
+    from: '"Suporte Açai Gest" <no-reply@acai-gest.com>',
   },
   template: {
     dir: join(__dirname, './template'), 

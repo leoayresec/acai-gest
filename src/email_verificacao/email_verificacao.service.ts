@@ -15,7 +15,6 @@ export class EmailVerificacaoService {
 
   // ✅ Enviar e-mail de ativação (simulado)
   async enviarEmailAtivacao(email: string, token: string) {
-    console.log(`📩 E-mail enviado para ${email} com token: ${token}`);
   }
 
   // ✅ Gerar um token de verificação para ativação de conta
@@ -35,17 +34,22 @@ export class EmailVerificacaoService {
 
   // ✅ Validar token e retornar os dados do usuário
   async validarToken(token: string) {
+
+    if (!token) {
+      throw new BadRequestException('Token não informado.');
+    }
+  
     const tokenInfo = await this.prisma.tab_tokens_verificacao.findUnique({
       where: { token },
-      include: { tab_usuarios: true }, // 🔹 Retorna os dados do usuário junto
+      include: { tab_usuarios: true },
     });
-
+  
     if (!tokenInfo || tokenInfo.expira_em < new Date()) {
       throw new BadRequestException('Token inválido ou expirado.');
     }
-
-    return tokenInfo.tab_usuarios;
+      return tokenInfo.tab_usuarios;
   }
+  
 
   // ✅ Remover token após ativação da conta
   async removerToken(token: string) {

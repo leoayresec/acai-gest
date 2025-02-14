@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto } from './dto/criar-empresa-dto';
@@ -28,9 +29,9 @@ export class EmpresaController {
   }
 
   // ✅ Confirmar conta por token (ativação de empresa)
-  @Post('confirmar')
+  @Get('confirmar')
   @HttpCode(200)
-  async confirmarConta(@Body('token') token: string) {
+  async confirmarConta(@Query('token') token: string) {
     try {
       return await this.empresaService.confirmarConta(token);
     } catch (error) {
@@ -46,8 +47,8 @@ export class EmpresaController {
 
   // ✅ Buscar empresa pelo ID
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const empresa = await this.empresaService.findOne(id);
+  async findOne(@Param('id_empresa') id_empresa: string) {
+    const empresa = await this.empresaService.findOne(id_empresa);
     if (!empresa) {
       throw new BadRequestException('Empresa não encontrada.');
     }

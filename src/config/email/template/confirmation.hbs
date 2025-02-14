@@ -4,11 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmação de Conta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 40px;
+        }
+        .container {
+            max-width: 500px;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h2 {
+            color: #4B0082; /* Roxo escuro - Cor do Açaí */
+            font-size: 22px;
+        }
+        p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #8A2BE2; /* Roxo mais vibrante */
+        }
+        .button {
+            display: inline-block;
+            background-color: #8A2BE2; /* Roxo - Cor do Açaí */
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .button:hover {
+            background-color: #6A0DAD; /* Roxo mais escuro */
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
-<h2>Olá,</h2>
-    <p>Para ativar sua conta, clique no link abaixo:</p>
-    <a href="{{ link }}">Ativar Conta</a>
-    <p>Se você não solicitou este cadastro, ignore este e-mail.</p>
+    <div class="container">
+        <h2>🌟 Bem-vindo(a), <span class="highlight">{{ empresa }}</span>! 🌟</h2>
+        <p>Ficamos felizes em ter você conosco! Para ativar sua conta e aproveitar todos os recursos do nosso sistema, clique no botão abaixo:</p>
+        <a href="{{ link }}" class="button">🔑 Ativar Conta</a>
+        <p class="footer">Caso não tenha feito este cadastro, apenas ignore este e-mail.</p>
+    </div>
 </body>
 </html>
