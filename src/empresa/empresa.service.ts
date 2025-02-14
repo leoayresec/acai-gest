@@ -18,7 +18,10 @@ export class EmpresaService {
     const empresa = await this.prisma.tab_empresas.findUnique({ where: { email } });
     return empresa !== null;
   }
-
+  private async verificarCpfCnpjExistente(cpf_cnpj: string): Promise<boolean> {
+    const empresa = await this.prisma.tab_empresas.findUnique({ where: { cpf_cnpj } });
+    return empresa !== null;
+  }
   // ✅ Criptografa a senha antes de salvar
   private async criptografarSenha(senha: string): Promise<string> {
     return bcrypt.hash(senha, 10);
@@ -28,6 +31,10 @@ export class EmpresaService {
   async create(dto: CreateEmpresaDto) {
     if (await this.verificarEmailExistente(dto.email)) {
       throw new BadRequestException('O email informado já está em uso.');
+    }
+
+    if (await this.verificarCpfCnpjExistente(dto.cpf_cnpj)) {
+      throw new BadRequestException('Já existe uma empresa cadastrada com este CPF/CNPJ.');
     }
   
     const senhaCriptografada = await this.criptografarSenha(dto.senha);
