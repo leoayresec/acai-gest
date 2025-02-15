@@ -9,7 +9,7 @@ datasource db {
 
 model tab_empresas {
   id_empresa       String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  razao_social     String         @db.VarChar(255) // 
+  razao_social     String         @db.VarChar(255)
   email            String         @unique @db.VarChar(255)
   num_telefone     String         @db.VarChar(20)
   cpf_cnpj         String         @unique @db.VarChar(20)
@@ -20,6 +20,7 @@ model tab_empresas {
   ativo            Boolean?       @default(false)
   data_criacao     DateTime?      @default(now()) @db.Timestamptz(6)
   data_atualizacao DateTime?      @default(now()) @db.Timestamptz(6)
+  tab_produtos     tab_produtos[]
   tab_usuarios     tab_usuarios[]
 }
 
@@ -49,7 +50,7 @@ model tab_tokens_verificacao {
 model tab_usuarios {
   id_usuario              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresa_id              String                    @db.Uuid
-  nome                    String                    @db.VarChar(255) //
+  nome                    String                    @db.VarChar(255)
   email                   String                    @unique @db.VarChar(255)
   num_telefone            String?                   @db.VarChar(20)
   senha                   String
@@ -59,4 +60,11 @@ model tab_usuarios {
   tab_permissoes_usuarios tab_permissoes_usuarios[]
   tab_tokens_verificacao  tab_tokens_verificacao?
   tab_empresas            tab_empresas              @relation(fields: [empresa_id], references: [id_empresa], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tab_unidades_medida {
+  id_unidade_medida Int            @id @default(autoincrement())
+  nome              String         @unique @db.VarChar(50)
+  sigla             String         @unique @db.VarChar(10)
+  tab_produtos      tab_produtos[]
 }
